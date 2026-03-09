@@ -94,25 +94,48 @@ const filterData = (status)=>{
     setActiveBtn(status);
     showLoading();
     setTimeout(() => {
-        displayIssues(status === 'all' ? allIssues : allIssues.filter(i => i.status === status));
+        if (status === 'all') {
+            displayIssues(allIssues);
+        } else {
+            const filtered = allIssues.filter(i => i.status === status);
+            displayIssues(filtered);
+        }
     }, 300);
 };
 
+// FIXED: Search function
 searchBtn.onclick = async ()=>{
     const q = searchInput.value.trim();
+    
+    // If search is empty, show all issues
     if (!q) {
         displayIssues(allIssues);
         setActiveBtn('all');
         return;
     }
+    
     showLoading();
     try {
         const res = await fetch(`https://phi-lab-server.vercel.app/api/v1/lab/issues/search?q=${encodeURIComponent(q)}`);
         const data = await res.json();
+        
+        // Display search results
         displayIssues(data.data);
+        
+        // Set All button as active (since search shows all results)
         setActiveBtn('all');
+        
+        // Optional: Clear search input after search
+        // searchInput.value = '';
     } catch {
         cardContainer.innerHTML = '<p class="text-red-500 text-center p-10">Search failed</p>';
+    }
+};
+
+// Also handle Enter key
+searchInput.onkeypress = (e)=>{
+    if (e.key === 'Enter') {
+        searchBtn.click();
     }
 };
 
@@ -184,7 +207,6 @@ window.showIssue = async (id)=>{
 allBtn.onclick = ()=> filterData('all');
 openBtn.onclick = ()=> filterData('open');
 closedBtn.onclick = ()=> filterData('closed');
-searchInput.onkeypress = (e)=> e.key === 'Enter' && searchBtn.click();
 
 setActiveBtn('all');
 fetchAllIssues();
